@@ -1,14 +1,7 @@
 import React from "react";
-import Router from "next/router";
-import ReactMarkdown from "react-markdown";
 import {
-  Table,
-  TableBody,
   TableCell,
-  TableContainer,
-  TableHead,
   TableRow,
-  Paper
 } from '@mui/material';
 
 
@@ -26,11 +19,12 @@ export type SymptomProps = {
   id: string;
   name: string;
   userId: string;
+  createdAt: string
 };
 
-const Food: React.FC<{ food: FoodProps }> = ({ food }) => {
-  const authorName = food.author ? food.author.name : "Unknown author";
-  console.log({food})
+type Props = FoodProps | SymptomProps
+
+const Food: React.FC<{ food: FoodProps | SymptomProps }> = ({ food }) => {
   const date = new Date(food.createdAt).toLocaleDateString()
   return (
     <TableRow

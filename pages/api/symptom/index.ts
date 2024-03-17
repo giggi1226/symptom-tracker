@@ -7,14 +7,27 @@ import { NextApiRequest, NextApiResponse } from 'next'
 // Required fields in body: title
 // Optional fields in body: content
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-  const { foodToAdd } = req.body;
+  const symptoms = { urine: false, thirst: false, ...req.body}
 
+  let symptomList = []
+
+  for (const [key, value] of Object.entries(symptoms)){
+    symptomList.push({name: key, present: value || false})
+  }
   const session = await getServerSession(req, res, options);
-  const result = await prisma.food.create({
+  const data = symptomList.map(symptom => ({...symptom }))
+
+
+  const result = await prisma.user.update({
+    where: {email: session?.user?.email},
     data: {
-      name: foodToAdd,
-      author: { connect: { email: session?.user?.email } },
+      symptoms: {
+        createMany: {
+          data: symptomList
+        }
+      }
     },
   });
+
   res.json(result);
 }

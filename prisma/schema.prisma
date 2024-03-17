@@ -61,8 +61,9 @@ model Symptom {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map(name: "created_at")
   name      String
-  User      User?    @relation(fields: [userId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
   userId    String?
+  present   Boolean  @default(false)
 
   @@map(name: "symptoms")
 }
