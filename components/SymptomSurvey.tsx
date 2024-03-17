@@ -2,6 +2,7 @@ import React, {useCallback} from "react";
 import {
   useForm
 } from 'react-hook-form';
+import {FoodProps, SymptomProps} from "./Post";
 
 
 // export type FoodProps = {
@@ -20,7 +21,7 @@ import {
 //   userId: string;
 // };
 
-const SymptomSurvey: React.FC = () => {
+const SymptomSurvey: React.FC<{ refresh: Function }> = ({refresh}) => {
 
   const {
     register,
@@ -37,11 +38,16 @@ const SymptomSurvey: React.FC = () => {
   const submitFunction = useCallback(async (data) => {
     console.log({data})
     try {
-      await fetch('/api/symptom', {
+      const res = await fetch('/api/symptom', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
+
+      if (res.status === 200){
+        refresh()
+      }
+
     } catch (error) {
       console.error(error);
     }

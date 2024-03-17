@@ -39,7 +39,11 @@ export const getServerSideProps: GetServerSideProps = async ({req, res}) => {
   })
 
   const symptoms = await prisma.symptom.findMany({
-    where: { userId: session.user['id'], createdAt: { gte: date.toISOString()} },
+    where: {
+      userId: session.user['id'],
+      createdAt: { gte: date.toISOString()},
+      present: true
+    },
   })
 
   return { 
@@ -96,7 +100,7 @@ const Blog: React.FC<Props> = ({foods, symptoms}) => {
   return (
     <Layout>
       <div className="page">
-        { symptoms && symptoms.length === 0 && <SymptomSurvey/>}
+        { symptoms && symptoms.length === 0 && <SymptomSurvey refresh={refreshData}/>}
         <h1>Food Log</h1>
         <main>
           <TableContainer component={Paper}>
