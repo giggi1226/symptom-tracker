@@ -1,42 +1,116 @@
-import React from "react"
-import { GetStaticProps } from "next"
+import React, {useCallback, useState} from "react"
+import { GetServerSideProps } from "next"
+import { useSession, getSession } from 'next-auth/react';
 import Layout from "../components/Layout"
-import Post, { PostProps } from "../components/Post"
+import Food, { FoodProps, SymptomProps } from "../components/Post"
+import prisma from '../lib/prisma';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button,
+  Paper
+} from '@mui/material';
+import FoodInput from "../components/FoodInput";
 
-export const getStaticProps: GetStaticProps = async () => {
-  const feed = [
-    {
-      id: "1",
-      title: "Prisma is the perfect ORM for Next.js",
-      content: "[Prisma](https://github.com/prisma/prisma) and Next.js go _great_ together!",
-      published: false,
+
+export const getServerSideProps: GetServerSideProps = async ({req, res}) => {
+  let date = new Date()
+  date.setHours(0,0,0,0)
+  const session = await getSession({ req });
+
+  if (!session) {
+    res.statusCode = 403;
+    return { props: { food: [] } };
+  }
+
+  const foods = await prisma.food.findMany({
+    where: { authorId: session.user['user_id'], createdAt: { gte: date.toISOString()} },
+    include: {
       author: {
-        name: "Nikolas Burk",
-        email: "burk@prisma.io",
+        select: { name: true },
       },
     },
-  ]
+  })
+
+  const symptoms = await prisma.symptom.findMany({
+    where: { userId: session.user['user_id'], createdAt: { gte: date.toISOString()} },
+  })
+
   return { 
-    props: { feed }, 
-    revalidate: 10 
+    props: {
+      foods: JSON.parse(JSON.stringify(foods)),
+      symptoms: JSON.parse(JSON.stringify(symptoms))
+    }
   }
 }
 
 type Props = {
-  feed: PostProps[]
+  foods: FoodProps[]
+  symptoms: SymptomProps[]
 }
 
 const Blog: React.FC<Props> = (props) => {
+  console.log({foods: props.foods, symptoms: props.symptoms || []})
+
+  const [showInput, setShowInput] = useState(false)
+  const [foodToAdd, setFoodToAdd] = useState('')
+
+  const handleFoodChange = useCallback(event => {
+    setFoodToAdd(event.target.value)
+  }, [])
+
+  const handleAddFood = useCallback(async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    try {
+      const body = { foodToAdd };
+      await fetch('/api/food', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    } catch (error) {
+      console.error(error);
+    }
+
+    setShowInput(false)
+  }, [foodToAdd])
+
+
+
   return (
     <Layout>
       <div className="page">
-        <h1>Public Feed</h1>
+        <h1>Food Log</h1>
         <main>
-          {props.feed.map((post) => (
-            <div key={post.id} className="post">
-              <Post post={post} />
+          {/*<SymptomSurvey/>*/}
+          <TableContainer component={Paper}>
+            <Table sx={{ minWidth: 650 }} aria-label="simple table">
+              <TableHead>
+                <TableRow>
+                  <TableCell align="right">Food</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {props.foods.map((food) => (
+                  <React.Fragment key={food.id}>
+                    <Food food={food}/>
+                  </React.Fragment>
+
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Button onClick={() => setShowInput(true)}>Add Food</Button>
+          {showInput && (
+            <div>
+              <FoodInput value={foodToAdd} onChangeFood={handleFoodChange}/>
+              <Button onClick={handleAddFood}>Post Food</Button>
             </div>
-          ))}
+          )}
         </main>
       </div>
       <style jsx>{`

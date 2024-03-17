@@ -1,33 +1,49 @@
 import React from "react";
 import Router from "next/router";
 import ReactMarkdown from "react-markdown";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper
+} from '@mui/material';
 
-export type PostProps = {
+
+export type FoodProps = {
   id: string;
-  title: string;
+  name: string;
+  createdAt: string;
   author: {
     name: string;
     email: string;
   } | null;
-  content: string;
-  published: boolean;
 };
 
-const Post: React.FC<{ post: PostProps }> = ({ post }) => {
-  const authorName = post.author ? post.author.name : "Unknown author";
+export type SymptomProps = {
+  id: string;
+  name: string;
+  userId: string;
+};
+
+const Food: React.FC<{ food: FoodProps }> = ({ food }) => {
+  const authorName = food.author ? food.author.name : "Unknown author";
+  console.log({food})
+  const date = new Date(food.createdAt).toLocaleDateString()
   return (
-    <div onClick={() => Router.push("/p/[id]", `/p/${post.id}`)}>
-      <h2>{post.title}</h2>
-      <small>By {authorName}</small>
-      <ReactMarkdown children={post.content} />
-      <style jsx>{`
-        div {
-          color: inherit;
-          padding: 2rem;
-        }
-      `}</style>
-    </div>
+    <TableRow
+      sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+    >
+      <TableCell align="right" component="th" scope="row">
+        {food.name}
+      </TableCell>
+      <TableCell align="right" component="th" scope="row">
+        {date}
+      </TableCell>
+    </TableRow>
   );
 };
 
-export default Post;
+export default Food;
