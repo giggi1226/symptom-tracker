@@ -96,7 +96,7 @@ const Blog: React.FC<Props> = ({foods, symptoms}) => {
   return (
     <Layout>
       <div className="page">
-        {symptoms.length === 0 && <SymptomSurvey/>}
+        { symptoms && symptoms.length === 0 && <SymptomSurvey/>}
         <h1>Food Log</h1>
         <main>
           <TableContainer component={Paper}>
@@ -108,7 +108,7 @@ const Blog: React.FC<Props> = ({foods, symptoms}) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {foods.map((food) => (
+                {foods && foods.map((food) => (
                   <React.Fragment key={food.id}>
                     <Food food={food}/>
                   </React.Fragment>
@@ -136,7 +136,7 @@ const Blog: React.FC<Props> = ({foods, symptoms}) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {symptoms.map((symptom) => (
+                {symptoms && symptoms.map((symptom) => (
                   <React.Fragment key={symptom.id}>
                     <Food food={symptom}/>
                   </React.Fragment>
