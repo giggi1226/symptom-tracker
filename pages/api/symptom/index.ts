@@ -11,8 +11,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   let symptomList = []
 
+  let date = new Date()
+  date.setHours(0,0,0,0)
+
   for (const [key, value] of Object.entries(symptoms)){
-    symptomList.push({name: key, present: value || false})
+    symptomList.push({name: key, present: value || false, createdAt: date.toISOString()})
   }
   const session = await getServerSession(req, res, options);
   const data = symptomList.map(symptom => ({...symptom }))

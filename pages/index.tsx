@@ -46,10 +46,36 @@ export const getServerSideProps: GetServerSideProps = async ({req, res}) => {
     },
   })
 
+  const currentDate = new Date()
+  const minDate = currentDate.getDate() - 8
+  console.log({minDate})
+  const prevDate = new Date()
+
+  prevDate.setDate(minDate)
+
+  const sevenDaySymptoms = await prisma.symptom.findMany({
+    select: {
+      createdAt: true,
+    },
+    where: {
+      createdAt: {
+        lte: currentDate.toISOString(),
+        gte: prevDate.toISOString()
+      },
+      userId: session.user['id'],
+      present: true
+    },
+    orderBy: [{
+      createdAt: "asc"
+    }],
+    distinct: ['createdAt']
+  })
+
   return { 
     props: {
       foods: JSON.parse(JSON.stringify(foods)),
-      symptoms: JSON.parse(JSON.stringify(symptoms))
+      symptoms: JSON.parse(JSON.stringify(symptoms)),
+      sevenDaySymptoms: JSON.parse(JSON.stringify(sevenDaySymptoms))
     }
   }
 }
@@ -57,11 +83,13 @@ export const getServerSideProps: GetServerSideProps = async ({req, res}) => {
 type Props = {
   foods: FoodProps[]
   symptoms: SymptomProps[]
+  sevenDaySymptoms: SymptomProps[]
 }
 
-const Blog: React.FC<Props> = ({foods, symptoms}) => {
-  console.log({foods, symptoms: symptoms})
+const Blog: React.FC<Props> = ({foods, symptoms, sevenDaySymptoms}) => {
   const router = useRouter();
+
+  console.log({sevenDaySymptoms})
 
   const refreshData = () => {
     router.replace(router.asPath);
@@ -99,8 +127,22 @@ const Blog: React.FC<Props> = ({foods, symptoms}) => {
 
   return (
     <Layout>
+      {sevenDaySymptoms.length > 6 && (
+        <Paper sx={{
+            width: '100%',
+            height: 60,
+            backgroundColor: '#cc0000',
+            display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{whiteSpace: 'pre-wrap', textAlign: 'center'}}>
+            <p style={{color: 'white'}}>{'You have experienced symptoms 7 days in a row.\nYou should talk to your doctor about diabetes.'}</p>
+          </div>
+        </Paper>
+      )}
       <div className="page">
-        { symptoms && symptoms.length === 0 && <SymptomSurvey refresh={refreshData}/>}
+        {symptoms && symptoms.length === 0 && <SymptomSurvey refresh={refreshData}/>}
         <h1>Food Log</h1>
         <main>
           <TableContainer component={Paper}>
