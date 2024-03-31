@@ -127,7 +127,7 @@ const Blog: React.FC<Props> = ({foods, symptoms, sevenDaySymptoms}) => {
 
   return (
     <Layout>
-      {sevenDaySymptoms.length > 6 && (
+      {sevenDaySymptoms && sevenDaySymptoms.length > 6 && (
         <Paper sx={{
             width: '100%',
             height: 60,
