@@ -52,7 +52,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   });
 
   // Connect foods with symptoms
-  const foodSymptomConnections = foods.flatMap(food => {
+  const foodSymptomConnections = foods?.flatMap(food => {
     return createdSymptoms.map(symptom => ({
       foodId:  food.id ,
       symptomId: symptom.id,

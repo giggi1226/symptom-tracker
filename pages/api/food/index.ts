@@ -32,5 +32,20 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       })
     )
   );
+
+  const correlation = await prisma.$queryRaw`
+    SELECT f.*
+    FROM foods f
+    WHERE f.id IN (
+      SELECT DISTINCT fs."foodId"
+      FROM "FoodSymptom" fs
+      JOIN symptoms s ON fs."symptomId" = s.id
+      WHERE f.name = ${foodToAdd}
+    );
+  `;
+
+  console.log(correlation)
+
+
   res.json(result);
 }

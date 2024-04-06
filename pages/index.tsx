@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from "react"
+import React, {useCallback, useEffect, useState} from "react"
 import { GetServerSideProps } from "next"
 import { useSession, getSession } from 'next-auth/react';
 import Layout from "../components/Layout"
@@ -19,7 +19,9 @@ import SymptomSurvey from "../components/SymptomSurvey";
 import {useRouter} from "next/router";
 
 
-export const getServerSideProps: GetServerSideProps = async ({req, res}) => {
+export const getServerSideProps: GetServerSideProps = async ({req, res, query}) => {
+  console.log({body: query, url: req.url})
+
   let date = new Date()
   date.setHours(0,0,0,0)
   const session = await getSession({ req });
@@ -28,24 +30,6 @@ export const getServerSideProps: GetServerSideProps = async ({req, res}) => {
     res.statusCode = 403;
     return { props: { food: [] } };
   }
-
-  const foods = await prisma.food.findMany({
-    where: { authorId: session.user['user_id'], createdAt: { gte: date.toISOString()} },
-    include: {
-      author: {
-        select: { name: true },
-      },
-    },
-  })
-
-  const symptoms = await prisma.symptom.findMany({
-    where: {
-      userId: session.user['id'],
-      createdAt: { gte: date.toISOString()}
-    },
-  })
-
-  const presentSymptoms = JSON.parse(JSON.stringify(symptoms)).filter(symptom => symptom.present )
 
   const currentDate = new Date()
   const minDate = currentDate.getDate() - 8
@@ -71,33 +55,79 @@ export const getServerSideProps: GetServerSideProps = async ({req, res}) => {
     distinct: ['createdAt']
   })
 
-
   return { 
     props: {
-      foods: JSON.parse(JSON.stringify(foods)),
-      symptoms: JSON.parse(JSON.stringify(symptoms)),
-      presentSymptoms,
       sevenDaySymptoms: JSON.parse(JSON.stringify(sevenDaySymptoms))
     }
   }
 }
 
 type Props = {
-  foods: FoodProps[]
-  symptoms: SymptomProps[]
-  presentSymptoms: SymptomProps[]
+  // presentSymptoms: SymptomProps[]
   sevenDaySymptoms: SymptomProps[]
 }
 
-const Blog: React.FC<Props> = ({foods, symptoms, sevenDaySymptoms, presentSymptoms}) => {
-  const router = useRouter();
-
-  const refreshData = () => {
-    router.replace(router.asPath);
-  }
-
+const Blog: React.FC<Props> = ({ sevenDaySymptoms}) => {
   const [showInput, setShowInput] = useState(false)
   const [foodToAdd, setFoodToAdd] = useState('')
+  const [userFoods, setUserFoods] = useState([]);
+  const [userSymptoms, setUserSymptoms] = useState([]);
+  const [foodPosted, setFoodPosted] = useState(false);
+  const [symptomPosted, setSymptomPosted] = useState(false);
+  const [presentSymptoms, setPresentSymptoms] = useState([])
+
+  const refreshData = async (type) => {
+    const res = await fetch(`/api/${type}`, {
+      headers: {'Content-Type': 'application/json'},
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      console.log({refreshData: data[type]}); // Ensure the response is what you expect
+      return data[type];
+    }
+
+    return []
+  }
+
+  useEffect(() => {
+    refreshData('foods').then(res => setUserFoods(res))
+
+    refreshData('symptoms').then(res => {
+      setUserSymptoms(res)
+      const present = res.filter(symptom => symptom.present )
+      setPresentSymptoms(present)
+    })
+
+  }, []);
+
+  useEffect(() => {
+    console.log({userFoods})
+    if(foodPosted){
+      refreshData('foods').then(res => setUserFoods(res))
+      setFoodPosted(false)
+    }
+
+    if(symptomPosted){
+      refreshData('symptoms').then(res => {
+        setUserSymptoms(res)
+        const present = res.filter(symptom => symptom.present )
+        setPresentSymptoms(present)
+      })
+
+      setSymptomPosted(false)
+    }
+
+  }, [
+    setFoodPosted,
+    setUserFoods,
+    setSymptomPosted,
+    setUserSymptoms,
+    userSymptoms,
+    symptomPosted,
+    foodPosted,
+    userFoods
+  ])
 
   const handleFoodChange = useCallback(event => {
     setFoodToAdd(event.target.value)
@@ -107,14 +137,16 @@ const Blog: React.FC<Props> = ({foods, symptoms, sevenDaySymptoms, presentSympto
     e.preventDefault();
     try {
       const body = { foodToAdd, symptoms: presentSymptoms?.map(symptom => symptom.id) };
-      const res = await fetch('/api/food', {
+      const res = await fetch(`/api/food?foodToAdd=${foodToAdd}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
       if (res.status === 200){
-        refreshData()
+        const data = await res.json();
+        console.log({handleAddFood: data});
+        setFoodPosted(true)
       }
 
     } catch (error) {
@@ -122,8 +154,28 @@ const Blog: React.FC<Props> = ({foods, symptoms, sevenDaySymptoms, presentSympto
     }
 
     setShowInput(false)
-  }, [foodToAdd])
+  }, [foodToAdd, setFoodPosted])
 
+  const submitFunction = useCallback(async (data) => {
+    const body = {data, userFoods}
+    console.log({submitFunction: userFoods})
+    try {
+      const res = await fetch('/api/symptom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (res.status === 200){
+        const data = await res.json();
+        console.log({submitFunction: data});
+        setSymptomPosted(true)
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+  }, [userFoods])
 
 
   return (
@@ -143,7 +195,7 @@ const Blog: React.FC<Props> = ({foods, symptoms, sevenDaySymptoms, presentSympto
         </Paper>
       )}
       <div className="page">
-        {symptoms && symptoms.length === 0 && <SymptomSurvey refresh={refreshData} foods={foods}/>}
+        {userSymptoms && userSymptoms.length === 0 && <SymptomSurvey refresh={submitFunction} />}
         <h1>Food Log</h1>
         <main>
           <TableContainer component={Paper}>
@@ -155,7 +207,7 @@ const Blog: React.FC<Props> = ({foods, symptoms, sevenDaySymptoms, presentSympto
                 </TableRow>
               </TableHead>
               <TableBody>
-                {foods && foods.map((food) => (
+                {userFoods && userFoods?.map((food) => (
                   <React.Fragment key={food.id}>
                     <Food food={food}/>
                   </React.Fragment>

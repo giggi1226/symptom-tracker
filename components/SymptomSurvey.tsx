@@ -1,10 +1,10 @@
 import React, {useCallback} from "react";
 import {
+  SubmitHandler,
   useForm
 } from 'react-hook-form';
-import {FoodProps} from "./Post";
 
-const SymptomSurvey: React.FC<{ refresh: Function, foods: FoodProps[] }> = ({refresh, foods}) => {
+const SymptomSurvey: React.FC<{ refresh: SubmitHandler<any> }> = ({refresh}) => {
 
   const {
     register,
@@ -25,27 +25,8 @@ const SymptomSurvey: React.FC<{ refresh: Function, foods: FoodProps[] }> = ({ref
     }
   });
 
-  const submitFunction = useCallback(async (data) => {
-    const body = {data, foods}
-    console.log({submitFunction: foods})
-    try {
-      const res = await fetch('/api/symptom', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (res.status === 200){
-        refresh()
-      }
-
-    } catch (error) {
-      console.error(error);
-    }
-  }, [foods])
-
   return (
-    <form onSubmit={handleSubmit(submitFunction)} style={{display: 'flex', flexDirection: 'column'}}>
+    <form onSubmit={handleSubmit(refresh)} style={{display: 'flex', flexDirection: 'column'}}>
       <div style={{display: 'flex', flexDirection: 'row'}}>
         <label>Are you urinating often?</label>
         <input type="checkbox" {...register("urine")}/>
