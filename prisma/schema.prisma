@@ -45,6 +45,9 @@ model Food {
   author    User?    @relation(fields: [authorId], references: [id])
   authorId  String?
 
+  // Define a many-to-many relationship with Symptom
+  symptomsForFood FoodSymptom[]
+
   @@map(name: "foods")
 }
 
@@ -65,6 +68,9 @@ model Symptom {
   userId    String?
   present   Boolean  @default(false)
 
+  // Define a many-to-many relationship with Food
+  foods FoodSymptom[]
+
   @@map(name: "symptoms")
 }
 
@@ -82,4 +88,15 @@ model User {
   emailVerified Boolean?
 
   @@map(name: "user")
+}
+
+// Junction table for the many-to-many relationship between Symptom and Food
+model FoodSymptom {
+  food   Food   @relation(fields: [foodId], references: [id])
+  foodId String
+
+  symptom   Symptom @relation(fields: [symptomId], references: [id])
+  symptomId String
+
+  @@id([foodId, symptomId])
 }

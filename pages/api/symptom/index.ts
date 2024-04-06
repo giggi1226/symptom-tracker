@@ -3,34 +3,66 @@ import {options} from "../auth/[...nextauth]"
 import prisma from '../../../lib/prisma';
 import { NextApiRequest, NextApiResponse } from 'next'
 
-// POST /api/post
-// Required fields in body: title
-// Optional fields in body: content
-export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-  const symptoms = { urine: false, thirst: false, ...req.body}
 
-  let symptomList = []
+export default async function handle(req: NextApiRequest, res: NextApiResponse) {
 
   let date = new Date()
   date.setHours(0,0,0,0)
-
-  for (const [key, value] of Object.entries(symptoms)){
-    symptomList.push({name: key, present: value || false, createdAt: date.toISOString()})
-  }
   const session = await getServerSession(req, res, options);
-  const data = symptomList.map(symptom => ({...symptom }))
 
+  const { data: symptoms, foods } = req.body;
 
-  const result = await prisma.user.update({
-    where: {email: session?.user?.email},
-    data: {
-      symptoms: {
-        createMany: {
-          data: symptomList
-        }
-      }
+  // Create symptoms
+   await prisma.symptom.createMany({
+    data: Object.entries(symptoms).map(([name, present]) => ({
+      name,
+      present: !!present, // Ensure present is boolean
+      createdAt: date.toISOString(),
+
+    })),
+    skipDuplicates: true, // Skip if symptom with same name exists
+  });
+
+  const createdSymptoms = await prisma.symptom.findMany({
+    where: {
+      name: {
+        in: Object.keys(symptoms), // Filter by the names of the symptoms created
+      },
+      createdAt: date.toISOString(),
+      present: true
     },
   });
 
-  res.json(result);
+  const userSymptoms = await prisma.symptom.findMany({
+    where: {
+      name: {
+        in: Object.keys(symptoms), // Filter by the names of the symptoms created
+      },
+      createdAt: date.toISOString(),
+    },
+  });
+
+  await prisma.user.update({
+    where: { email: session?.user?.email }, // Filter by user's email
+    data: {
+      symptoms: {
+        connect: userSymptoms?.map(symptom => ({ id: symptom.id })),
+      },
+    },
+  });
+
+  // Connect foods with symptoms
+  const foodSymptomConnections = foods.flatMap(food => {
+    return createdSymptoms.map(symptom => ({
+      foodId:  food.id ,
+      symptomId: symptom.id,
+    }));
+  });
+
+  // Create entries in FoodSymptom table
+  await prisma.foodSymptom.createMany({
+    data: foodSymptomConnections,
+  });
+
+  res.json(createdSymptoms);
 }

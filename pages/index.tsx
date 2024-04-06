@@ -41,14 +41,14 @@ export const getServerSideProps: GetServerSideProps = async ({req, res}) => {
   const symptoms = await prisma.symptom.findMany({
     where: {
       userId: session.user['id'],
-      createdAt: { gte: date.toISOString()},
-      present: true
+      createdAt: { gte: date.toISOString()}
     },
   })
 
+  const presentSymptoms = JSON.parse(JSON.stringify(symptoms)).filter(symptom => symptom.present )
+
   const currentDate = new Date()
   const minDate = currentDate.getDate() - 8
-  console.log({minDate})
   const prevDate = new Date()
 
   prevDate.setDate(minDate)
@@ -71,10 +71,12 @@ export const getServerSideProps: GetServerSideProps = async ({req, res}) => {
     distinct: ['createdAt']
   })
 
+
   return { 
     props: {
       foods: JSON.parse(JSON.stringify(foods)),
       symptoms: JSON.parse(JSON.stringify(symptoms)),
+      presentSymptoms,
       sevenDaySymptoms: JSON.parse(JSON.stringify(sevenDaySymptoms))
     }
   }
@@ -83,13 +85,12 @@ export const getServerSideProps: GetServerSideProps = async ({req, res}) => {
 type Props = {
   foods: FoodProps[]
   symptoms: SymptomProps[]
+  presentSymptoms: SymptomProps[]
   sevenDaySymptoms: SymptomProps[]
 }
 
-const Blog: React.FC<Props> = ({foods, symptoms, sevenDaySymptoms}) => {
+const Blog: React.FC<Props> = ({foods, symptoms, sevenDaySymptoms, presentSymptoms}) => {
   const router = useRouter();
-
-  console.log({sevenDaySymptoms})
 
   const refreshData = () => {
     router.replace(router.asPath);
@@ -98,7 +99,6 @@ const Blog: React.FC<Props> = ({foods, symptoms, sevenDaySymptoms}) => {
   const [showInput, setShowInput] = useState(false)
   const [foodToAdd, setFoodToAdd] = useState('')
 
-
   const handleFoodChange = useCallback(event => {
     setFoodToAdd(event.target.value)
   }, [])
@@ -106,7 +106,7 @@ const Blog: React.FC<Props> = ({foods, symptoms, sevenDaySymptoms}) => {
   const handleAddFood = useCallback(async (e: React.SyntheticEvent) => {
     e.preventDefault();
     try {
-      const body = { foodToAdd };
+      const body = { foodToAdd, symptoms: presentSymptoms?.map(symptom => symptom.id) };
       const res = await fetch('/api/food', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -116,6 +116,7 @@ const Blog: React.FC<Props> = ({foods, symptoms, sevenDaySymptoms}) => {
       if (res.status === 200){
         refreshData()
       }
+
     } catch (error) {
       console.error(error);
     }
@@ -142,7 +143,7 @@ const Blog: React.FC<Props> = ({foods, symptoms, sevenDaySymptoms}) => {
         </Paper>
       )}
       <div className="page">
-        {symptoms && symptoms.length === 0 && <SymptomSurvey refresh={refreshData}/>}
+        {symptoms && symptoms.length === 0 && <SymptomSurvey refresh={refreshData} foods={foods}/>}
         <h1>Food Log</h1>
         <main>
           <TableContainer component={Paper}>
@@ -182,7 +183,7 @@ const Blog: React.FC<Props> = ({foods, symptoms, sevenDaySymptoms}) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {symptoms && symptoms.map((symptom) => (
+                {presentSymptoms && presentSymptoms.map((symptom) => (
                   <React.Fragment key={symptom.id}>
                     <Food food={symptom}/>
                   </React.Fragment>
