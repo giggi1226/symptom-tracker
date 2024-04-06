@@ -13,8 +13,15 @@ const SymptomSurvey: React.FC<{ refresh: Function, foods: FoodProps[] }> = ({ref
     formState: { errors }
   } = useForm({
     defaultValues: {
-      urine: "",
-      thirst: ""
+      urine: false,
+      thirst: false,
+      hunger: false,
+      weight_loss: false,
+      fatigue: false,
+      blurred_vision: false,
+      infections: false,
+      numbness: false,
+      darkened: false,
     }
   });
 
