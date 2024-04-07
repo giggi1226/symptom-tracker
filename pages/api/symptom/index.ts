@@ -60,9 +60,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   });
 
   // Create entries in FoodSymptom table
-  await prisma.foodSymptom.createMany({
-    data: foodSymptomConnections,
-  });
+  if(foodSymptomConnections){
+    await prisma.foodSymptom.createMany({
+      data: foodSymptomConnections,
+    });
+  }
 
   res.json(createdSymptoms);
 }

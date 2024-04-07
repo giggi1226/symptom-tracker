@@ -75,6 +75,7 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms}) => {
   const [foodPosted, setFoodPosted] = useState(false);
   const [symptomPosted, setSymptomPosted] = useState(false);
   const [presentSymptoms, setPresentSymptoms] = useState([])
+  const [foodSymptomCorrelations, setFoodSymptomCorrelations] = useState([])
 
   const refreshData = async (type) => {
     const res = await fetch(`/api/${type}`, {
@@ -144,8 +145,10 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms}) => {
       });
 
       if (res.status === 200){
-        const data = await res.json();
-        console.log({handleAddFood: data});
+        const response = await res.json();
+        const {data} = response
+        console.log({handleAddFood: data.correlation});
+        setFoodSymptomCorrelations(data.correlation)
         setFoodPosted(true)
       }
 
@@ -154,7 +157,7 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms}) => {
     }
 
     setShowInput(false)
-  }, [foodToAdd, setFoodPosted])
+  }, [foodToAdd, setFoodPosted, setFoodSymptomCorrelations])
 
   const submitFunction = useCallback(async (data) => {
     const body = {data, userFoods}
@@ -167,8 +170,8 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms}) => {
       });
 
       if (res.status === 200){
-        const data = await res.json();
-        console.log({submitFunction: data});
+        const response = await res.json();
+        console.log({submitFunction: response});
         setSymptomPosted(true)
       }
 
@@ -191,6 +194,20 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms}) => {
         }}>
           <div style={{whiteSpace: 'pre-wrap', textAlign: 'center'}}>
             <p style={{color: 'white'}}>{'You have experienced symptoms 7 days in a row.\nYou should talk to your doctor about diabetes.'}</p>
+          </div>
+        </Paper>
+      )}
+      {foodSymptomCorrelations && foodSymptomCorrelations.length > 3 && (
+        <Paper sx={{
+          width: '100%',
+          height: 60,
+          backgroundColor: '#cc0000',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{whiteSpace: 'pre-wrap', textAlign: 'center'}}>
+            <p style={{color: 'white'}}>{`You have experienced symptoms at least 3 times when consuming ${foodToAdd}, consider a substitute`}</p>
           </div>
         </Paper>
       )}

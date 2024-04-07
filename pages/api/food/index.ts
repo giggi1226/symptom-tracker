@@ -44,8 +44,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     );
   `;
 
-  console.log(correlation)
 
-
-  res.json(result);
+  res.json({
+    data: {
+      food: {...result},
+      correlation
+    }
+  });
 }

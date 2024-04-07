@@ -69,6 +69,3 @@ const SymptomSurvey: React.FC<{ refresh: SubmitHandler<any> }> = ({refresh}) => 
 };
 
 export default SymptomSurvey;
-
-// info@rmrbenefits.com
-// ATTN: ALYSSA
