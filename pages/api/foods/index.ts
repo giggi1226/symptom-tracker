@@ -14,9 +14,15 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   const session = await getServerSession(req, res, options);
 
+  const user = await prisma.user.findUnique({
+    where: {
+      email: session?.user?.email,
+    },
+  });
+
 
   const foods = await prisma.food.findMany({
-    where: { authorId: session.user['user_id'], createdAt: { gte: date.toISOString()} },
+    where: { authorId: user?.id, createdAt: { gte: date.toISOString()} },
     include: {
       author: {
         select: { name: true },

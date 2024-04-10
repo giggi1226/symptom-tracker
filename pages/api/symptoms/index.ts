@@ -14,10 +14,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   const session = await getServerSession(req, res, options);
 
+  const user = await prisma.user.findUnique({
+    where: {
+      email: session?.user?.email,
+    },
+  });
+
 
   const symptoms = await prisma.symptom.findMany({
     where: {
-      userId: session.user['id'],
+      userId: user?.id,
       createdAt: { gte: date.toISOString()}
     },
   })
