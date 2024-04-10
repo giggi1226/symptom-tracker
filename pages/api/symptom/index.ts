@@ -42,7 +42,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     },
   });
 
-  await prisma.user.update({
+  console.log({email: session?.user?.email, userSymptoms, createdSymptoms, date: date.toISOString()})
+
+  const updatedUser = await prisma.user.update({
     where: { email: session?.user?.email }, // Filter by user's email
     data: {
       symptoms: {
@@ -50,6 +52,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     },
   });
+  console.log({email: session?.user?.email, userSymptoms, createdSymptoms, date: date.toISOString(), updatedUser})
 
   // Connect foods with symptoms
   const foodSymptomConnections = foods?.flatMap(food => {
