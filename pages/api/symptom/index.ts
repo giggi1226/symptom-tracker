@@ -12,13 +12,21 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   const { data: symptoms, foods } = req.body;
 
+  const user = await prisma.user.findUnique({
+    where: {
+      email: session?.user?.email,
+    },
+  });
+
+  console.log({user})
+
   // Create symptoms
    await prisma.symptom.createMany({
     data: Object.entries(symptoms).map(([name, present]) => ({
       name,
       present: !!present, // Ensure present is boolean
       createdAt: date.toISOString(),
-
+      userId: user?.id
     })),
     skipDuplicates: true, // Skip if symptom with same name exists
   });
@@ -43,16 +51,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   });
 
   console.log({email: session?.user?.email, userSymptoms, createdSymptoms, date: date.toISOString()})
-
-  const updatedUser = await prisma.user.update({
-    where: { email: session?.user?.email }, // Filter by user's email
-    data: {
-      symptoms: {
-        connect: userSymptoms?.map(symptom => ({ id: symptom.id })),
-      },
-    },
-  });
-  console.log({email: session?.user?.email, userSymptoms, createdSymptoms, date: date.toISOString(), updatedUser})
 
   // Connect foods with symptoms
   const foodSymptomConnections = foods?.flatMap(food => {
