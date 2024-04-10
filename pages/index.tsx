@@ -197,7 +197,7 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms}) => {
           </div>
         </Paper>
       )}
-      {foodSymptomCorrelations && foodSymptomCorrelations.length > 3 && (
+      {foodSymptomCorrelations && foodSymptomCorrelations.length > 2 && (
         <Paper sx={{
           width: '100%',
           height: 60,

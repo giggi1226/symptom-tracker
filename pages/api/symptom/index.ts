@@ -25,7 +25,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     data: Object.entries(symptoms).map(([name, present]) => ({
       name,
       present: !!present, // Ensure present is boolean
-      createdAt: date.toISOString(),
+      // createdAt: date.toISOString(),
       userId: user?.id
     })),
     skipDuplicates: true, // Skip if symptom with same name exists

@@ -20,6 +20,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   });
 
   const foodId = result.id;
+  const userId = result.authorId
 
   // Connect the symptoms to the newly created food
   await Promise.all(
@@ -41,6 +42,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       FROM "FoodSymptom" fs
       JOIN symptoms s ON fs."symptomId" = s.id
       WHERE f.name = ${foodToAdd}
+      AND s.userId = ${userId}
     );
   `;
 
