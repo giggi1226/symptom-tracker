@@ -42,7 +42,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       FROM "FoodSymptom" fs
       JOIN symptoms s ON fs."symptomId" = s.id
       WHERE f.name = ${foodToAdd}
-      AND s.userId = ${userId}
+      AND s."userId" = ${userId}
     );
   `;
 
