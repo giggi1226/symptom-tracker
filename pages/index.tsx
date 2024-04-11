@@ -17,6 +17,7 @@ import {
 import FoodInput from "../components/FoodInput";
 import SymptomSurvey from "../components/SymptomSurvey";
 import {useRouter} from "next/router";
+import {session} from "next-auth/core/routes";
 
 
 export const getServerSideProps: GetServerSideProps = async ({req, res, query}) => {
@@ -37,6 +38,12 @@ export const getServerSideProps: GetServerSideProps = async ({req, res, query}) 
 
   prevDate.setDate(minDate)
 
+  const user = await prisma.user.findUnique({
+    where: {
+      email: session?.user?.email,
+    },
+  });
+
   const sevenDaySymptoms = await prisma.symptom.findMany({
     select: {
       createdAt: true,
@@ -46,7 +53,7 @@ export const getServerSideProps: GetServerSideProps = async ({req, res, query}) 
         lte: currentDate.toISOString(),
         gte: prevDate.toISOString()
       },
-      userId: session.user['id'],
+      userId: user?.id,
       present: true
     },
     orderBy: [{
@@ -57,7 +64,8 @@ export const getServerSideProps: GetServerSideProps = async ({req, res, query}) 
 
   return { 
     props: {
-      sevenDaySymptoms: JSON.parse(JSON.stringify(sevenDaySymptoms))
+      sevenDaySymptoms: JSON.parse(JSON.stringify(sevenDaySymptoms)),
+      userId: session?.user?.email
     }
   }
 }
@@ -65,9 +73,10 @@ export const getServerSideProps: GetServerSideProps = async ({req, res, query}) 
 type Props = {
   // presentSymptoms: SymptomProps[]
   sevenDaySymptoms: SymptomProps[]
+  userId: string
 }
 
-const Blog: React.FC<Props> = ({ sevenDaySymptoms}) => {
+const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId}) => {
   const [showInput, setShowInput] = useState(false)
   const [foodToAdd, setFoodToAdd] = useState('')
   const [userFoods, setUserFoods] = useState([]);
@@ -183,87 +192,89 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms}) => {
 
   return (
     <Layout>
-      {sevenDaySymptoms && sevenDaySymptoms.length > 6 && (
-        <Paper sx={{
-            width: '100%',
-            height: 60,
-            backgroundColor: '#cc0000',
-            display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <div style={{whiteSpace: 'pre-wrap', textAlign: 'center'}}>
-            <p style={{color: 'white'}}>{'You have experienced symptoms 7 days in a row.\nYou should talk to your doctor about diabetes.'}</p>
-          </div>
-        </Paper>
-      )}
-      {foodSymptomCorrelations && foodSymptomCorrelations.length > 2 && (
-        <Paper sx={{
-          width: '100%',
-          height: 60,
-          backgroundColor: '#cc0000',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <div style={{whiteSpace: 'pre-wrap', textAlign: 'center'}}>
-            <p style={{color: 'white'}}>{`You have experienced symptoms at least 3 times when consuming ${foodToAdd}, consider a substitute`}</p>
-          </div>
-        </Paper>
-      )}
-      <div className="page">
-        {userSymptoms && userSymptoms.length === 0 && <SymptomSurvey refresh={submitFunction} />}
-        <h1>Food Log</h1>
-        <main>
-          <TableContainer component={Paper}>
-            <Table sx={{minWidth: 650}} aria-label="simple table">
-              <TableHead>
-                <TableRow>
-                  <TableCell align="right">Food</TableCell>
-                  <TableCell align="right">Date</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {userFoods && userFoods?.map((food) => (
-                  <React.Fragment key={food.id}>
-                    <Food food={food}/>
-                  </React.Fragment>
-
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <Button onClick={() => setShowInput(true)}>Add Food</Button>
-          {showInput && (
-            <div>
-              <FoodInput value={foodToAdd} onChangeFood={handleFoodChange}/>
-              <Button onClick={handleAddFood}>Post Food</Button>
-            </div>
+      {userId ? (
+        <>
+          {sevenDaySymptoms && sevenDaySymptoms.length > 6 && (
+            <Paper sx={{
+              width: '100%',
+              height: 60,
+              backgroundColor: '#cc0000',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <div style={{whiteSpace: 'pre-wrap', textAlign: 'center'}}>
+                <p style={{color: 'white'}}>{'You have experienced symptoms 7 days in a row.\nYou should talk to your doctor about diabetes.'}</p>
+              </div>
+            </Paper>
           )}
-        </main>
-        <h1>Symptom Log</h1>
-        <main>
-          <TableContainer component={Paper}>
-            <Table sx={{minWidth: 650}} aria-label="simple table">
-              <TableHead>
-                <TableRow>
-                  <TableCell align="right">Symptom</TableCell>
-                  <TableCell align="right">Date</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {presentSymptoms && presentSymptoms.map((symptom) => (
-                  <React.Fragment key={symptom.id}>
-                    <Food food={symptom}/>
-                  </React.Fragment>
+          {foodSymptomCorrelations && foodSymptomCorrelations.length > 2 && (
+            <Paper sx={{
+              width: '100%',
+              height: 60,
+              backgroundColor: '#cc0000',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <div style={{whiteSpace: 'pre-wrap', textAlign: 'center'}}>
+                <p style={{color: 'white'}}>{`You have experienced symptoms at least 3 times when consuming ${foodToAdd}, consider a substitute`}</p>
+              </div>
+            </Paper>
+          )}
+          <div className="page">
+            {userSymptoms && userSymptoms.length === 0 && <SymptomSurvey refresh={submitFunction} />}
+            <h1>Food Log</h1>
+            <main>
+              <TableContainer component={Paper}>
+                <Table sx={{minWidth: 650}} aria-label="simple table">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell align="right">Food</TableCell>
+                      <TableCell align="right">Date</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {userFoods && userFoods?.map((food) => (
+                      <React.Fragment key={food.id}>
+                        <Food food={food}/>
+                      </React.Fragment>
 
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </main>
-      </div>
-      <style jsx>{`
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <Button onClick={() => setShowInput(true)}>Add Food</Button>
+              {showInput && (
+                <div>
+                  <FoodInput value={foodToAdd} onChangeFood={handleFoodChange}/>
+                  <Button onClick={handleAddFood}>Post Food</Button>
+                </div>
+              )}
+            </main>
+            <h1>Symptom Log</h1>
+            <main>
+              <TableContainer component={Paper}>
+                <Table sx={{minWidth: 650}} aria-label="simple table">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell align="right">Symptom</TableCell>
+                      <TableCell align="right">Date</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {presentSymptoms && presentSymptoms.map((symptom) => (
+                      <React.Fragment key={symptom.id}>
+                        <Food food={symptom}/>
+                      </React.Fragment>
+
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </main>
+          </div>
+          <style jsx>{`
           .post {
               background: white;
               transition: box-shadow 0.1s ease-in;
@@ -277,6 +288,9 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms}) => {
               margin-top: 2rem;
           }
       `}</style>
+        </>
+      ) : <h1>Make sure to login on top right</h1>}
+
     </Layout>
   )
 }
