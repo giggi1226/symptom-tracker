@@ -18,8 +18,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     },
   });
 
-  console.log({user})
-
   // Create symptoms
    await prisma.symptom.createMany({
     data: Object.entries(symptoms).map(([name, present]) => ({
@@ -49,8 +47,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       createdAt: date.toISOString(),
     },
   });
-
-  console.log({email: session?.user?.email, userSymptoms, createdSymptoms, date: date.toISOString()})
 
   // Connect foods with symptoms
   const foodSymptomConnections = foods?.flatMap(food => {

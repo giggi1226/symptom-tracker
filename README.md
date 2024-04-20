@@ -1,3 +1,12 @@
-# Fullstack Authentication Example with Next.js and NextAuth.js
+# Symptom Tracker
 
-This is the starter project for the fullstack tutorial with Next.js and Prisma. You can find the final version of this project in the [`final`](https://github.com/prisma/blogr-nextjs-prisma/tree/final) branch of this repo.
+This is a fullstack application that tracks type 2 diabetes symptoms. The idea here is that this will help in starting 
+conversations with your primary care physician if you consistently are experiencing symptoms. In addition to a 
+conversation starter it will also help in behavior change by notifying you when a food you eat consistently causes symptoms.
+
+# Tech
+This application was built using the following:
+- NextJS
+- Postgres
+- prisma
+- Material UI

@@ -16,12 +16,9 @@ import {
 } from '@mui/material';
 import FoodInput from "../components/FoodInput";
 import SymptomSurvey from "../components/SymptomSurvey";
-import {useRouter} from "next/router";
-import {session} from "next-auth/core/routes";
 
 
 export const getServerSideProps: GetServerSideProps = async ({req, res, query}) => {
-  console.log({body: query, url: req.url})
 
   let date = new Date()
   date.setHours(0,0,0,0)
@@ -65,7 +62,8 @@ export const getServerSideProps: GetServerSideProps = async ({req, res, query}) 
   return { 
     props: {
       sevenDaySymptoms: JSON.parse(JSON.stringify(sevenDaySymptoms)),
-      userId: session?.user?.email
+      userId: session?.user?.email,
+      userName: session?.user?.name?.toLowerCase()
     }
   }
 }
@@ -73,10 +71,11 @@ export const getServerSideProps: GetServerSideProps = async ({req, res, query}) 
 type Props = {
   // presentSymptoms: SymptomProps[]
   sevenDaySymptoms: SymptomProps[]
-  userId: string
+  userId: string,
+  userName: string
 }
 
-const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId}) => {
+const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId, userName}) => {
   const [showInput, setShowInput] = useState(false)
   const [foodToAdd, setFoodToAdd] = useState('')
   const [userFoods, setUserFoods] = useState([]);
@@ -93,7 +92,6 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId}) => {
 
     if (res.ok) {
       const data = await res.json();
-      console.log({refreshData: data[type]}); // Ensure the response is what you expect
       return data[type];
     }
 
@@ -112,7 +110,6 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId}) => {
   }, []);
 
   useEffect(() => {
-    console.log({userFoods})
     if(foodPosted){
       refreshData('foods').then(res => setUserFoods(res))
       setFoodPosted(false)
@@ -156,7 +153,6 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId}) => {
       if (res.status === 200){
         const response = await res.json();
         const {data} = response
-        console.log({handleAddFood: data.correlation});
         setFoodSymptomCorrelations(data.correlation)
         setFoodPosted(true)
       }
@@ -170,7 +166,6 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId}) => {
 
   const submitFunction = useCallback(async (data) => {
     const body = {data, userFoods}
-    console.log({submitFunction: userFoods})
     try {
       const res = await fetch('/api/symptom', {
         method: 'POST',
@@ -180,7 +175,6 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId}) => {
 
       if (res.status === 200){
         const response = await res.json();
-        console.log({submitFunction: response});
         setSymptomPosted(true)
       }
 
@@ -188,6 +182,38 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId}) => {
       console.error(error);
     }
   }, [userFoods])
+
+  const addPreviousTwo = useCallback(async () => {
+    try {
+      const res = await fetch('/api/testTwoDay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (res.status === 200){
+        const response = await res.json();
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+  }, [])
+
+  const addPreviousSix = useCallback(async () => {
+    try {
+      const res = await fetch('/api/testSevenDay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (res.status === 200){
+        const response = await res.json();
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+  }, [])
 
 
   return (
@@ -273,6 +299,17 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId}) => {
                 </Table>
               </TableContainer>
             </main>
+
+            { (userName === "ross raiff" || userName === "giselle pacheco") && (
+              <div style={{ position: 'fixed',
+                padding: '10px 10px 0px 10px',
+                bottom: 0,
+                width: '100%',
+                height: 40,
+                color: 'white'}}>
+              <Button onClick={addPreviousTwo}> Add previous 2 days</Button>
+              <Button onClick={addPreviousSix}>Add previous 6 days</Button>
+            </div>)}
           </div>
           <style jsx>{`
           .post {
@@ -285,7 +322,7 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId}) => {
           }
 
           .post + .post {
-              margin-top: 2rem;
+              margin-top: 2rem;  
           }
       `}</style>
         </>
