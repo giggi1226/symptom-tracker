@@ -9,6 +9,7 @@ import {restoreReducer} from "next/dist/client/components/router-reducer/reducer
 // Optional fields in body: content
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const { foodToAdd, symptoms } = req.body;
+  console.log({symptoms})
 
   const session = await getServerSession(req, res, options);
 

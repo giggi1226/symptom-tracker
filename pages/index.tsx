@@ -77,8 +77,8 @@ const Blog: React.FC<Props> = ({ userId, userName}) => {
     refreshData('symptoms').then(res => {
       const {symptoms} = res
       setUserSymptoms(symptoms)
-      console.log({symptoms})
       const present = symptoms.filter(symptom => symptom.present )
+      console.log({emptyEffect: present})
       setPresentSymptoms(present)
     })
 
@@ -95,6 +95,7 @@ const Blog: React.FC<Props> = ({ userId, userName}) => {
         const {symptoms} = res
         setUserSymptoms(symptoms)
         const present = symptoms.filter(symptom => symptom.present )
+        console.log({otherEffect: present})
         setPresentSymptoms(present)
         setSevenDaySymptoms(res.sevenDaySymptoms)
       })
@@ -142,7 +143,7 @@ const Blog: React.FC<Props> = ({ userId, userName}) => {
     }
 
     setShowInput(false)
-  }, [foodToAdd, setFoodPosted, setFoodSymptomCorrelations])
+  }, [foodToAdd, setFoodPosted, setFoodSymptomCorrelations, presentSymptoms])
 
   const submitFunction = useCallback(async (data) => {
     const body = {data, userFoods}
@@ -164,6 +165,9 @@ const Blog: React.FC<Props> = ({ userId, userName}) => {
   }, [userFoods])
 
   const addPreviousTwo = useCallback(async () => {
+    setFoodSymptomCorrelations([])
+    setUserFoods([])
+    setUserSymptoms([])
     try {
       const res = await fetch('/api/testTwoDay', {
         method: 'POST',
@@ -172,6 +176,8 @@ const Blog: React.FC<Props> = ({ userId, userName}) => {
 
       if (res.status === 200){
         const response = await res.json();
+        setSymptomPosted(true)
+        setFoodPosted(true)
       }
 
     } catch (error) {
