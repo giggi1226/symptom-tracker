@@ -46,7 +46,7 @@ You can view the data added in this production environment by using prisma studi
 # Running project locally
 ## Version Requirements
 To avoid any problems running the application the following is recommended:
-- Node version 20.6.1
+- Node version 18.18.2
 - npx version 10.2.3
   - after installing node you can install npx using `npm install -g npx`
   - npx is used if you want to run prisma studio
