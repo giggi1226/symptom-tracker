@@ -17,6 +17,7 @@
     - Adds thirst as a symptom starting 7 days ago
 
 ## Adding Symptoms
+NOTE:  ANSWER SURVEY FIRST THEN ADD FOOD
 - Once logged in you will see a survey
 - check the symptoms that you are experiencing.
   - you can submit the survey with all symptoms unchecked.

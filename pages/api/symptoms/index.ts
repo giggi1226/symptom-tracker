@@ -28,6 +28,30 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     },
   })
 
+  const currentDate = new Date()
+  const minDate = currentDate.getDate() - 8
+  const prevDate = new Date()
 
-  res.json({symptoms});
+  prevDate.setDate(minDate)
+
+  const sevenDaySymptoms = await prisma.symptom.findMany({
+    select: {
+      createdAt: true,
+    },
+    where: {
+      createdAt: {
+        lte: currentDate.toISOString(),
+        gte: prevDate.toISOString()
+      },
+      userId: user?.id,
+      present: true
+    },
+    orderBy: [{
+      createdAt: "asc"
+    }],
+    distinct: ['createdAt']
+  })
+
+
+  res.json({symptoms, sevenDaySymptoms});
 }

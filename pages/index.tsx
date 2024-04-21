@@ -29,39 +29,8 @@ export const getServerSideProps: GetServerSideProps = async ({req, res, query}) 
     return { props: { food: [] } };
   }
 
-  const currentDate = new Date()
-  const minDate = currentDate.getDate() - 8
-  const prevDate = new Date()
-
-  prevDate.setDate(minDate)
-
-  const user = await prisma.user.findUnique({
-    where: {
-      email: session?.user?.email,
-    },
-  });
-
-  const sevenDaySymptoms = await prisma.symptom.findMany({
-    select: {
-      createdAt: true,
-    },
-    where: {
-      createdAt: {
-        lte: currentDate.toISOString(),
-        gte: prevDate.toISOString()
-      },
-      userId: user?.id,
-      present: true
-    },
-    orderBy: [{
-      createdAt: "asc"
-    }],
-    distinct: ['createdAt']
-  })
-
-  return { 
+  return {
     props: {
-      sevenDaySymptoms: JSON.parse(JSON.stringify(sevenDaySymptoms)),
       userId: session?.user?.email,
       userName: session?.user?.name?.toLowerCase()
     }
@@ -69,13 +38,11 @@ export const getServerSideProps: GetServerSideProps = async ({req, res, query}) 
 }
 
 type Props = {
-  // presentSymptoms: SymptomProps[]
-  sevenDaySymptoms: SymptomProps[]
   userId: string,
   userName: string
 }
 
-const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId, userName}) => {
+const Blog: React.FC<Props> = ({ userId, userName}) => {
   const [showInput, setShowInput] = useState(false)
   const [foodToAdd, setFoodToAdd] = useState('')
   const [userFoods, setUserFoods] = useState([]);
@@ -84,6 +51,7 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId, userName}) => {
   const [symptomPosted, setSymptomPosted] = useState(false);
   const [presentSymptoms, setPresentSymptoms] = useState([])
   const [foodSymptomCorrelations, setFoodSymptomCorrelations] = useState([])
+  const [sevenDaySymptoms, setSevenDaySymptoms] = useState([])
 
   const refreshData = async (type) => {
     const res = await fetch(`/api/${type}`, {
@@ -92,6 +60,11 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId, userName}) => {
 
     if (res.ok) {
       const data = await res.json();
+      if(type === 'symptoms'){
+        return {
+          ...data
+        }
+      }
       return data[type];
     }
 
@@ -102,8 +75,10 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId, userName}) => {
     refreshData('foods').then(res => setUserFoods(res))
 
     refreshData('symptoms').then(res => {
-      setUserSymptoms(res)
-      const present = res.filter(symptom => symptom.present )
+      const {symptoms} = res
+      setUserSymptoms(symptoms)
+      console.log({symptoms})
+      const present = symptoms.filter(symptom => symptom.present )
       setPresentSymptoms(present)
     })
 
@@ -117,9 +92,11 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId, userName}) => {
 
     if(symptomPosted){
       refreshData('symptoms').then(res => {
-        setUserSymptoms(res)
-        const present = res.filter(symptom => symptom.present )
+        const {symptoms} = res
+        setUserSymptoms(symptoms)
+        const present = symptoms.filter(symptom => symptom.present )
         setPresentSymptoms(present)
+        setSevenDaySymptoms(res.sevenDaySymptoms)
       })
 
       setSymptomPosted(false)
@@ -130,10 +107,12 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId, userName}) => {
     setUserFoods,
     setSymptomPosted,
     setUserSymptoms,
+    setSevenDaySymptoms,
     userSymptoms,
     symptomPosted,
     foodPosted,
-    userFoods
+    userFoods,
+    sevenDaySymptoms
   ])
 
   const handleFoodChange = useCallback(event => {
@@ -152,6 +131,7 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId, userName}) => {
 
       if (res.status === 200){
         const response = await res.json();
+        console.log({response})
         const {data} = response
         setFoodSymptomCorrelations(data.correlation)
         setFoodPosted(true)
@@ -200,6 +180,9 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId, userName}) => {
   }, [])
 
   const addPreviousSix = useCallback(async () => {
+    setFoodSymptomCorrelations([])
+    setUserFoods([])
+    setUserSymptoms([])
     try {
       const res = await fetch('/api/testSevenDay', {
         method: 'POST',
@@ -208,13 +191,13 @@ const Blog: React.FC<Props> = ({ sevenDaySymptoms, userId, userName}) => {
 
       if (res.status === 200){
         const response = await res.json();
+        setSymptomPosted(true)
       }
 
     } catch (error) {
       console.error(error);
     }
   }, [])
-
 
   return (
     <Layout>
