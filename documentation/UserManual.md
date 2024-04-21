@@ -42,6 +42,9 @@ NOTE:  ANSWER SURVEY FIRST THEN ADD FOOD
 You can view the data added in this production environment by using prisma studio.
 - Follow instructions for running the application below (minus `npm start`)
 - Follow instructions for database viewer
+- you can also view the data in your database viewer of your choice
+  - make sure that you view it as a postgres DB
+  - use credentials from environment variables found in `documentation/config`
 
 # Running project locally
 ## Version Requirements
