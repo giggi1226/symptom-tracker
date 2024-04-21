@@ -212,7 +212,7 @@ const Blog: React.FC<Props> = ({ userId, userName}) => {
           {sevenDaySymptoms && sevenDaySymptoms.length > 6 && (
             <Paper sx={{
               width: '100%',
-              height: 60,
+              height: 100,
               backgroundColor: '#cc0000',
               display: 'flex',
               alignItems: 'center',
@@ -220,6 +220,13 @@ const Blog: React.FC<Props> = ({ userId, userName}) => {
             }}>
               <div style={{whiteSpace: 'pre-wrap', textAlign: 'center'}}>
                 <p style={{color: 'white'}}>{'You have experienced symptoms 7 days in a row.\nYou should talk to your doctor about diabetes.'}</p>
+                 <a
+                   style={{color: 'white'}}
+                    href={'https://signin.epic.com/adfs/ls/?wa=wsignin1.0&wtrealm=https%3a%2f%2fuserweb.epic.com%2f&wctx=rm%3d1%26id%3dpassive%26ru%3d%252F&wct=2024-04-21T17%3a10%3a01Z&wreply=https%3a%2f%2fuserweb.epic.com%2f'}
+                    target="_blank"
+                  >
+                    Make Appointment here
+                  </a>
               </div>
             </Paper>
           )}
